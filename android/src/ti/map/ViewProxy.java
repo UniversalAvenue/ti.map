@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import android.graphics.Point;
 import org.appcelerator.kroll.annotations.Kroll;
 import org.appcelerator.kroll.common.AsyncResult;
 import org.appcelerator.kroll.common.Log;
@@ -19,6 +20,9 @@ import org.appcelerator.titanium.TiC;
 import org.appcelerator.titanium.proxy.TiViewProxy;
 import org.appcelerator.titanium.util.TiConvert;
 import org.appcelerator.titanium.view.TiUIView;
+
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.model.LatLng;
 
 import android.app.Activity;
 import android.os.Message;
@@ -46,8 +50,7 @@ public class ViewProxy extends TiViewProxy {
 	private static final int MSG_SET_LOCATION = MSG_FIRST_ID + 510;
 	private static final int MSG_MAX_ZOOM = MSG_FIRST_ID + 511;
 	private static final int MSG_MIN_ZOOM = MSG_FIRST_ID + 512;
-	private static final int MSG_SNAP_SHOT = MSG_FIRST_ID + 513;
-
+    private static final int MSG_SNAP_SHOT = MSG_FIRST_ID + 513;
 	private static final int MSG_ADD_POLYGON = MSG_FIRST_ID + 901;
 	private static final int MSG_REMOVE_POLYGON = MSG_FIRST_ID + 902;
 	private static final int MSG_REMOVE_ALL_POLYGONS = MSG_FIRST_ID + 903;
@@ -153,13 +156,13 @@ public class ViewProxy extends TiViewProxy {
 			result.setResult(null);
 			return true;
 		}
-		
+
 		case MSG_MAX_ZOOM: {
 			result = (AsyncResult) msg.obj;
 			result.setResult(getMaxZoom());
 			return true;
 		}
-		
+
 		case MSG_MIN_ZOOM: {
 			result = (AsyncResult) msg.obj;
 			result.setResult(getMinZoom());
@@ -249,6 +252,41 @@ public class ViewProxy extends TiViewProxy {
 		}
 		}
 	}
+
+	@Kroll.method()
+	public Object coordinateFromPoint(int x, int y)
+	{
+        final Point point = new Point(x, y);
+
+        if (TiApplication.getInstance().isUIThread()) {
+            return coordinateFromPoint(point);
+        }
+
+        final AsyncResult result = new AsyncResult();
+        getActivity().runOnUiThread(new Runnable() {
+            public void run() {
+                result.setResult(coordinateFromPoint(point));
+            }
+        });
+        return result.getResult();
+    }
+
+    protected HashMap<String, Object> coordinateFromPoint(Point point)
+    {
+        TiUIMapView mapView = (TiUIMapView) peekView();
+        HashMap<String, Object> res = new HashMap();
+
+        if (mapView != null && mapView.getMap() != null) {
+            LatLng latlng = ((GoogleMap) mapView.getMap()).getProjection().fromScreenLocation(point);
+            res.put("latitude", latlng.latitude);
+            res.put("longitude", latlng.longitude);
+        } else {
+            res.put("latitude", null);
+            res.put("longitude", null);
+        }
+
+        return res;
+    }
 
 	@Kroll.method
 	public void addAnnotation(AnnotationProxy annotation) {
