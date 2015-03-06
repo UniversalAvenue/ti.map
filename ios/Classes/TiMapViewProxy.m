@@ -126,6 +126,25 @@
 
 #pragma mark Public API
 
+-(id)coordinateFromPoint:(id)args
+{
+    NSNumber *x;
+    NSNumber *y;
+    
+    ENSURE_ARG_AT_INDEX(x, args, 0, NSNumber);
+    ENSURE_ARG_AT_INDEX(y, args, 1, NSNumber);
+    
+    CLLocationCoordinate2D coordinate = [[(TiMapView *)[self view] map]
+                                                    convertPoint:CGPointMake([x floatValue], [y floatValue])
+                                            toCoordinateFromView:[self view]
+                                         ];
+    
+    return @{
+             @"latitude": [NSNumber numberWithDouble:coordinate.latitude],
+             @"longitude": [NSNumber numberWithDouble:coordinate.longitude]
+             };
+}
+
 -(void)zoom:(id)arg
 {
 	ENSURE_SINGLE_ARG(arg,NSObject);
