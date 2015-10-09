@@ -1,5 +1,14 @@
 # Change Log
 <pre>
+v2.3.3    Update toImage() signature [TIMOB-19314]
+          Strip down Google Play Services library to include only maps components [TIMOB-18082]
+
+v2.3.2    Update Google Play Services library and assets [TIMOB-18988]
+
+v2.3.1    Add drawing support. Includes polygons, polylines, and circles. [TIMOB-15410]
+          Ensure region property is set after mapMove on android to match behavior of ios. [TIMOB-17857]
+
+v2.3.0    Fixed a couple crashing issues with map, added API name. [TIMOB-18244]
 
 v2.2.5    Fixed the example. [MOD-2073]
 
