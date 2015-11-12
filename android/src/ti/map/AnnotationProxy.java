@@ -65,6 +65,7 @@ public class AnnotationProxy extends KrollProxy
 	private int iconImageHeight = 0;
 	private int iconImageWidth = 0;
 	private String annoTitle;
+	private String imagePath;
 
 	private static final int MSG_FIRST_ID = KrollProxy.MSG_LAST_ID + 1;
 
@@ -72,6 +73,8 @@ public class AnnotationProxy extends KrollProxy
 	private static final int MSG_SET_LAT = MSG_FIRST_ID + 301;
 	private static final int MSG_SET_DRAGGABLE = MSG_FIRST_ID + 302;
 	private static final int MSG_UPDATE_INFO_WINDOW = MSG_FIRST_ID + 303;
+	private static final int MSG_SET_OPACITY = MSG_FIRST_ID + 304;
+	private static final int MSG_SET_ICON = MSG_FIRST_ID + 305;
 
 	public AnnotationProxy()
 	{
@@ -128,6 +131,20 @@ public class AnnotationProxy extends KrollProxy
 
 			case MSG_UPDATE_INFO_WINDOW: {
 				updateInfoWindow();
+				return true;
+			}
+
+			case MSG_SET_OPACITY: {
+				result = (AsyncResult) msg.obj;
+				setOpacity(TiConvert.toFloat(result.getArg()));
+				result.setResult(null);
+				return true;
+			}
+
+			case MSG_SET_ICON: {
+				result = (AsyncResult) msg.obj;
+				setIcon(TiConvert.toString(result.getArg()));
+				result.setResult(null);
 				return true;
 			}
 
@@ -189,6 +206,10 @@ public class AnnotationProxy extends KrollProxy
 			}
 		}
 
+		if (hasProperty(TiC.PROPERTY_OPACITY)) {
+			markerOptions.alpha(TiConvert.toFloat(getProperty(TiC.PROPERTY_OPACITY)));
+		}
+
 		if (hasProperty(MapModule.PROPERTY_DRAGGABLE)) {
 			markerOptions.draggable(TiConvert.toBoolean(getProperty(MapModule.PROPERTY_DRAGGABLE)));
 		}
@@ -234,6 +255,7 @@ public class AnnotationProxy extends KrollProxy
 	{
 		// image path
 		if (image instanceof String) {
+			imagePath = (String) image;
 			TiDrawableReference imageref = TiDrawableReference.fromUrl(this, (String) image);
 			Bitmap bitmap = imageref.getBitmap();
 			if (bitmap != null) {
@@ -387,5 +409,40 @@ public class AnnotationProxy extends KrollProxy
 		} else {
 			getMainHandler().sendEmptyMessage(MSG_UPDATE_INFO_WINDOW);
 		}
+	}
+
+	@Kroll.method
+	public void setOpacity(float a) {
+		if (marker == null) {
+			return;
+		}
+
+		if (TiApplication.isUIThread()) {
+			 marker.getMarker().setAlpha(a);
+		} else {
+			TiMessenger.sendBlockingMainMessage(getMainHandler().obtainMessage(MSG_SET_OPACITY), a);
+		}
+	}
+
+	@Kroll.method
+	public void setIcon(String path) {
+		if (marker == null) {
+			return;
+		}
+
+		if (TiApplication.isUIThread()) {
+			TiDrawableReference imageref = TiDrawableReference.fromUrl(this, (String) path);
+			Bitmap bitmap = imageref.getBitmap();
+			if (bitmap != null) {
+				marker.getMarker().setIcon(BitmapDescriptorFactory.fromBitmap(bitmap));
+			}
+		} else {
+			TiMessenger.sendBlockingMainMessage(getMainHandler().obtainMessage(MSG_SET_ICON), path);
+		}
+	}
+
+	@Kroll.method
+	public String getIcon() {
+		return imagePath;
 	}
 }
